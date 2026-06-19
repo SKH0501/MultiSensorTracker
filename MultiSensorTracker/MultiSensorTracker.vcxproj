@@ -131,6 +131,9 @@
   <ItemGroup>
     <ClCompile Include="MultiSensorTracker.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\01_requirements.md" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
