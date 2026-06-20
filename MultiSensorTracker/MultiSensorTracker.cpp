@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <fstream>
+#include <sstream>
+#include <vector>
+
 
 using namespace std;
 
@@ -24,6 +28,8 @@ enum class TargetStatus {
     WATCH,
     WARNING
 };
+
+
 
 string statusToString(TargetStatus status) {
     switch (status) {
@@ -181,6 +187,74 @@ TargetStatus evaluateStatus(const Coordinate& position, double speed) {
     return TargetStatus::NORMAL;
 }
 
+SensorType parseSensorType(const string& sensorTypeText) {
+    if (sensorTypeText == "RADAR") {
+        return SensorType::RADAR;
+    }
+
+    if (sensorTypeText == "EO") {
+        return SensorType::EO;
+    }
+
+    return SensorType::EO;
+}
+
+string sensorTypeToString(SensorType sensorType) {
+    switch (sensorType) {
+    case SensorType::RADAR:
+        return "RADAR";
+    case SensorType::EO:
+        return "EO";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+vector<SensorData> loadSensorDataFromCsv(const string& filePath) {
+    vector<SensorData> sensorDataList;
+
+    ifstream file(filePath);
+
+    if (!file.is_open()) {
+        cout << "Failed to open file: " << filePath << "\n";
+        return sensorDataList;
+    }
+
+    string line;
+
+    // 첫 번째 줄은 헤더이므로 건너뛴다.
+    getline(file, line);
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+
+        string timeText;
+        string sensorTypeText;
+        string targetId;
+        string value1Text;
+        string value2Text;
+
+        getline(ss, timeText, ',');
+        getline(ss, sensorTypeText, ',');
+        getline(ss, targetId, ',');
+        getline(ss, value1Text, ',');
+        getline(ss, value2Text, ',');
+
+        int time = stoi(timeText);
+        SensorType sensorType = parseSensorType(sensorTypeText);
+        double value1 = stod(value1Text);
+        double value2 = stod(value2Text);
+
+        SensorData data(time, sensorType, targetId, value1, value2);
+        sensorDataList.push_back(data);
+    }
+
+    file.close();
+
+    return sensorDataList;
+}
+
+
 int main() {
     cout << "=== Multi Sensor Tracker ===\n\n";
 
@@ -239,6 +313,19 @@ int main() {
     TargetStatus status = evaluateStatus(currentPosition, speed);
 
     cout << "Status: " << statusToString(status) << "\n";
+
+    cout << "\n=== CSV Load Test ===\n";
+
+    vector<SensorData> sensorDataList = loadSensorDataFromCsv("..\\data\\normal_case.csv");
+
+    for (const SensorData& data : sensorDataList) {
+        cout << "time=" << data.time
+            << ", sensor=" << sensorTypeToString(data.sensorType)
+            << ", target=" << data.targetId
+            << ", value1=" << data.value1
+            << ", value2=" << data.value2
+            << "\n";
+    }
 
     return 0;
 }

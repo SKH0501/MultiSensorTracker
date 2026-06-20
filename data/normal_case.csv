@@ -1,0 +1,5 @@
+time,sensor_type,target_id,value1,value2
+0,RADAR,T1,100,30
+0,EO,T1,85,50
+1,RADAR,T1,105,32
+1,EO,T1,89,52
