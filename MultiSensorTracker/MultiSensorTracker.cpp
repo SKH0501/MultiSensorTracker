@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <map>
 
 
 using namespace std;
@@ -73,6 +74,25 @@ struct SensorData {
         targetId(inputTargetId),
         value1(inputValue1),
         value2(inputValue2) {
+    }
+};
+
+
+struct SimulationInput {
+    int time;
+    string targetId;
+    bool hasRadar;
+    bool hasEo;
+    SensorData radarData;
+    SensorData eoData;
+
+    SimulationInput()
+        : time(0),
+        targetId(""),
+        hasRadar(false),
+        hasEo(false),
+        radarData(0, SensorType::RADAR, "", 0.0, 0.0),
+        eoData(0, SensorType::EO, "", 0.0, 0.0) {
     }
 };
 
@@ -254,6 +274,76 @@ vector<SensorData> loadSensorDataFromCsv(const string& filePath) {
     return sensorDataList;
 }
 
+vector<SimulationInput> groupSensorDataByTimeAndTarget(const vector<SensorData>& sensorDataList) {
+    map<string, SimulationInput> groupedData;
+
+    for (const SensorData& data : sensorDataList) {
+        string key = to_string(data.time) + "_" + data.targetId;
+
+        if (groupedData.find(key) == groupedData.end()) {
+            SimulationInput input;
+            input.time = data.time;
+            input.targetId = data.targetId;
+            groupedData[key] = input;
+        }
+
+        if (data.sensorType == SensorType::RADAR) {
+            groupedData[key].radarData = data;
+            groupedData[key].hasRadar = true;
+        }
+        else if (data.sensorType == SensorType::EO) {
+            groupedData[key].eoData = data;
+            groupedData[key].hasEo = true;
+        }
+    }
+
+    vector<SimulationInput> result;
+
+    for (const auto& pair : groupedData) {
+        result.push_back(pair.second);
+    }
+
+    return result;
+}
+
+void runSimulationFromCsv(const string& filePath) {
+    vector<SensorData> sensorDataList = loadSensorDataFromCsv(filePath);
+    vector<SimulationInput> simulationInputs = groupSensorDataByTimeAndTarget(sensorDataList);
+
+    map<string, Target> targets;
+
+    cout << "\n=== CSV Simulation Test ===\n";
+
+    for (const SimulationInput& input : simulationInputs) {
+        if (!input.hasRadar || !input.hasEo) {
+            cout << "[time=" << input.time << "] target=" << input.targetId
+                << " status=SENSOR_LOST\n";
+            continue;
+        }
+
+        Coordinate radarCoordinate = convertRadarToCoordinate(input.radarData);
+        Coordinate eoCoordinate = convertEoToCoordinate(input.eoData);
+        Coordinate fusedCoordinate = fuseCoordinates(radarCoordinate, eoCoordinate);
+
+        if (targets.find(input.targetId) == targets.end()) {
+            targets.emplace(input.targetId, Target(input.targetId));
+        }
+
+        Target& target = targets.at(input.targetId);
+        target.updatePosition(fusedCoordinate, input.time);
+
+        double speed = target.calculateSpeed();
+        TargetStatus status = evaluateStatus(target.getCurrentPosition(), speed);
+
+        cout << "[time=" << input.time << "] "
+            << "target=" << input.targetId << " "
+            << "fused=";
+        fusedCoordinate.print();
+        cout << " speed=" << speed
+            << " status=" << statusToString(status)
+            << "\n";
+    }
+}
 
 int main() {
     cout << "=== Multi Sensor Tracker ===\n\n";
@@ -326,6 +416,8 @@ int main() {
             << ", value2=" << data.value2
             << "\n";
     }
+
+    runSimulationFromCsv("..\\data\\normal_case.csv");
 
     return 0;
 }
