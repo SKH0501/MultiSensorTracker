@@ -6,7 +6,6 @@
 #include <vector>
 #include <map>
 
-
 using namespace std;
 
 const double PI = 3.14159265358979323846;
@@ -30,7 +29,29 @@ enum class TargetStatus {
     WARNING
 };
 
+string sensorTypeToString(SensorType sensorType) {
+    switch (sensorType) {
+    case SensorType::RADAR:
+        return "RADAR";
+    case SensorType::EO:
+        return "EO";
+    default:
+        return "UNKNOWN";
+    }
+}
 
+SensorType parseSensorType(const string& sensorTypeText) {
+    if (sensorTypeText == "RADAR") {
+        return SensorType::RADAR;
+    }
+
+    if (sensorTypeText == "EO") {
+        return SensorType::EO;
+    }
+
+    cout << "Unknown sensor type: " << sensorTypeText << "\n";
+    return SensorType::EO;
+}
 
 string statusToString(TargetStatus status) {
     switch (status) {
@@ -76,7 +97,6 @@ struct SensorData {
         value2(inputValue2) {
     }
 };
-
 
 struct SimulationInput {
     int time;
@@ -207,29 +227,6 @@ TargetStatus evaluateStatus(const Coordinate& position, double speed) {
     return TargetStatus::NORMAL;
 }
 
-SensorType parseSensorType(const string& sensorTypeText) {
-    if (sensorTypeText == "RADAR") {
-        return SensorType::RADAR;
-    }
-
-    if (sensorTypeText == "EO") {
-        return SensorType::EO;
-    }
-
-    return SensorType::EO;
-}
-
-string sensorTypeToString(SensorType sensorType) {
-    switch (sensorType) {
-    case SensorType::RADAR:
-        return "RADAR";
-    case SensorType::EO:
-        return "EO";
-    default:
-        return "UNKNOWN";
-    }
-}
-
 vector<SensorData> loadSensorDataFromCsv(const string& filePath) {
     vector<SensorData> sensorDataList;
 
@@ -306,6 +303,19 @@ vector<SimulationInput> groupSensorDataByTimeAndTarget(const vector<SensorData>&
     return result;
 }
 
+void printCsvLoadTest(const vector<SensorData>& sensorDataList) {
+    cout << "\n=== CSV Load Test ===\n";
+
+    for (const SensorData& data : sensorDataList) {
+        cout << "time=" << data.time
+            << ", sensor=" << sensorTypeToString(data.sensorType)
+            << ", target=" << data.targetId
+            << ", value1=" << data.value1
+            << ", value2=" << data.value2
+            << "\n";
+    }
+}
+
 void runSimulationFromCsv(const string& filePath) {
     vector<SensorData> sensorDataList = loadSensorDataFromCsv(filePath);
     vector<SimulationInput> simulationInputs = groupSensorDataByTimeAndTarget(sensorDataList);
@@ -346,78 +356,15 @@ void runSimulationFromCsv(const string& filePath) {
 }
 
 int main() {
-    cout << "=== Multi Sensor Tracker ===\n\n";
+    cout << "=== Multi Sensor Tracker ===\n";
 
-    cout << "=== Sensor Fusion Test: time 0 ===\n";
+    string filePath = "..\\data\\normal_case.csv";
 
-    SensorData radarDataTime0(0, SensorType::RADAR, "T1", 100.0, 30.0);
-    SensorData eoDataTime0(0, SensorType::EO, "T1", 85.0, 50.0);
+    vector<SensorData> sensorDataList = loadSensorDataFromCsv(filePath);
 
-    Coordinate radarCoordinateTime0 = convertRadarToCoordinate(radarDataTime0);
-    Coordinate eoCoordinateTime0 = convertEoToCoordinate(eoDataTime0);
-    Coordinate fusedCoordinateTime0 = fuseCoordinates(radarCoordinateTime0, eoCoordinateTime0);
+    printCsvLoadTest(sensorDataList);
 
-    cout << "RADAR Coordinate: ";
-    radarCoordinateTime0.print();
-    cout << "\n";
-
-    cout << "EO Coordinate: ";
-    eoCoordinateTime0.print();
-    cout << "\n";
-
-    cout << "Fused Coordinate: ";
-    fusedCoordinateTime0.print();
-    cout << "\n\n";
-
-    cout << "=== Sensor Fusion Test: time 1 ===\n";
-
-    SensorData radarDataTime1(1, SensorType::RADAR, "T1", 105.0, 32.0);
-    SensorData eoDataTime1(1, SensorType::EO, "T1", 89.0, 52.0);
-
-    Coordinate radarCoordinateTime1 = convertRadarToCoordinate(radarDataTime1);
-    Coordinate eoCoordinateTime1 = convertEoToCoordinate(eoDataTime1);
-    Coordinate fusedCoordinateTime1 = fuseCoordinates(radarCoordinateTime1, eoCoordinateTime1);
-
-    cout << "RADAR Coordinate: ";
-    radarCoordinateTime1.print();
-    cout << "\n";
-
-    cout << "EO Coordinate: ";
-    eoCoordinateTime1.print();
-    cout << "\n";
-
-    cout << "Fused Coordinate: ";
-    fusedCoordinateTime1.print();
-    cout << "\n\n";
-
-    cout << "=== Target Tracking Test ===\n";
-
-    Target target("T1");
-    target.updatePosition(fusedCoordinateTime0, 0);
-    target.updatePosition(fusedCoordinateTime1, 1);
-
-    target.printTrackingInfo();
-
-    Coordinate currentPosition = target.getCurrentPosition();
-    double speed = target.calculateSpeed();
-    TargetStatus status = evaluateStatus(currentPosition, speed);
-
-    cout << "Status: " << statusToString(status) << "\n";
-
-    cout << "\n=== CSV Load Test ===\n";
-
-    vector<SensorData> sensorDataList = loadSensorDataFromCsv("..\\data\\normal_case.csv");
-
-    for (const SensorData& data : sensorDataList) {
-        cout << "time=" << data.time
-            << ", sensor=" << sensorTypeToString(data.sensorType)
-            << ", target=" << data.targetId
-            << ", value1=" << data.value1
-            << ", value2=" << data.value2
-            << "\n";
-    }
-
-    runSimulationFromCsv("..\\data\\normal_case.csv");
+    runSimulationFromCsv(filePath);
 
     return 0;
 }
