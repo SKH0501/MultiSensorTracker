@@ -26,7 +26,8 @@ enum class SensorType {
 enum class TargetStatus {
     NORMAL,
     WATCH,
-    WARNING
+    WARNING,
+    SENSOR_LOST
 };
 
 string sensorTypeToString(SensorType sensorType) {
@@ -61,6 +62,8 @@ string statusToString(TargetStatus status) {
         return "WATCH";
     case TargetStatus::WARNING:
         return "WARNING";
+    case TargetStatus::SENSOR_LOST:
+        return "SENSOR_LOST";
     default:
         return "UNKNOWN";
     }
