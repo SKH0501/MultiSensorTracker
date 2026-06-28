@@ -69,6 +69,22 @@ string statusToString(TargetStatus status) {
     }
 }
 
+string getMissingSensorReason(const SimulationInput& input) {
+    if (!input.hasRadar && !input.hasEo) {
+        return "missing RADAR and EO";
+    }
+
+    if (!input.hasRadar) {
+        return "missing RADAR";
+    }
+
+    if (!input.hasEo) {
+        return "missing EO";
+    }
+
+    return "none";
+}
+
 struct Coordinate {
     double x;
     double y;
