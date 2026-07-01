@@ -69,21 +69,6 @@ string statusToString(TargetStatus status) {
     }
 }
 
-string getMissingSensorReason(const SimulationInput& input) {
-    if (!input.hasRadar && !input.hasEo) {
-        return "missing RADAR and EO";
-    }
-
-    if (!input.hasRadar) {
-        return "missing RADAR";
-    }
-
-    if (!input.hasEo) {
-        return "missing EO";
-    }
-
-    return "none";
-}
 
 struct Coordinate {
     double x;
@@ -134,6 +119,23 @@ struct SimulationInput {
         eoData(0, SensorType::EO, "", 0.0, 0.0) {
     }
 };
+
+string getMissingSensorReason(const SimulationInput& input) {
+    if (!input.hasRadar && !input.hasEo) {
+        return "missing RADAR and EO";
+    }
+
+    if (!input.hasRadar) {
+        return "missing RADAR";
+    }
+
+    if (!input.hasEo) {
+        return "missing EO";
+    }
+
+    return "none";
+}
+
 
 class Target {
 private:
@@ -345,8 +347,14 @@ void runSimulationFromCsv(const string& filePath) {
 
     for (const SimulationInput& input : simulationInputs) {
         if (!input.hasRadar || !input.hasEo) {
-            cout << "[time=" << input.time << "] target=" << input.targetId
-                << " status=SENSOR_LOST\n";
+            TargetStatus status = TargetStatus::SENSOR_LOST;
+
+            cout << "[time=" << input.time << "] "
+                << "target=" << input.targetId << " "
+                << "status=" << statusToString(status)
+                << " reason=" << getMissingSensorReason(input)
+                << "\n";
+
             continue;
         }
 
@@ -373,6 +381,9 @@ void runSimulationFromCsv(const string& filePath) {
             << "\n";
     }
 }
+
+
+// cd C:\Users\gram\Documents\GitHub\MultiSensorTracker
 
 int main() {
     cout << "=== Multi Sensor Tracker ===\n";
