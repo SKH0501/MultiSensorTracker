@@ -1,6 +1,6 @@
-"time,sensor_type,target_id,value1,value2"
-"0,RADAR,T1,100,30"
-"0,EO,T1,85,50"
-"1,RADAR,T1,105,32"
-"2,RADAR,T1,110,35"
-"2,EO,T1,90,58"
+time,sensor_type,target_id,value1,value2
+0,RADAR,T1,100,30
+0,EO,T1,85,50
+1,RADAR,T1,105,32
+2,RADAR,T1,110,35
+2,EO,T1,90,58

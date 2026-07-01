@@ -388,7 +388,9 @@ void runSimulationFromCsv(const string& filePath) {
 int main() {
     cout << "=== Multi Sensor Tracker ===\n";
 
-    string filePath = "..\\data\\normal_case.csv";
+    // string filePath = "..\\data\\normal_case.csv";
+
+    string filePath = "..\\data\\sensor_lost_case.csv";
 
     vector<SensorData> sensorDataList = loadSensorDataFromCsv(filePath);
 
